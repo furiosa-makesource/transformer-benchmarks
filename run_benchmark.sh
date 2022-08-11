@@ -32,14 +32,14 @@ ARGUMENT_LIST=(
 
 #setup defaults
 # Devices to test (You can run either CPU or GPU, but not both: gpu need onnxruntime-gpu, and CPU need onnxruntime).
-run_gpu_fp32=true
+run_gpu_fp32=false
 run_gpu_fp16=false
-run_cpu_fp32=false
+run_cpu_fp32=true
 run_cpu_int8=false
 # Engines to test.
 run_ort=true
 run_shark=false
-run_torch=false
+run_torch=true
 run_torchscript=true
 run_tensorflow=true
 run_iree=true
