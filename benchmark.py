@@ -395,9 +395,11 @@ def run_iree(use_gpu, model_names, model_class, precision, num_threads,
         encoded_input[key] = tf.expand_dims(tf.convert_to_tensor(encoded_input[key]),0)
 
     # Compile the model using IREE
-    backend = "dylib-llvm-aot"
+    # backend = "dylib-llvm-aot"
+    backend = "cpu"
     args = ["--iree-llvm-target-cpu-features=host"]
-    backend_config = "dylib"
+    # backend_config = "dylib"
+    backend_config = "local-task"
     if use_gpu:
         backend = "cuda"
         backend_config = "cuda"
@@ -409,12 +411,14 @@ def run_iree(use_gpu, model_names, model_class, precision, num_threads,
     flatbuffer_blob = compile_str(compiler_module, input_type="mhlo", target_backends=[backend], extra_args=args)
     #flatbuffer_blob = compile_str(compiler_module, target_backends=[backend])
 
-    # Save module as MLIR file in a directory
-    vm_module = ireert.VmModule.from_flatbuffer(flatbuffer_blob)
-    #tracer = ireert.Tracer(os.getcwd())
-    # TODO: Remove printing of "Tracing module.predict"
     config = ireert.Config(backend_config)
     ctx = ireert.SystemContext(config=config)
+
+    # Save module as MLIR file in a directory
+    vm_module = ireert.VmModule.from_flatbuffer(ctx.instance, flatbuffer_blob)
+
+    #tracer = ireert.Tracer(os.getcwd())
+    # TODO: Remove printing of "Tracing module.predict"
     ctx.add_vm_module(vm_module)
     BertCompiled = ctx.modules.module
 
@@ -440,7 +444,7 @@ def run_iree(use_gpu, model_names, model_class, precision, num_threads,
         bert_predict = BertCompiled.predict
         runtimes = timeit.repeat(lambda: bert_predict(*device_inputs), repeat=repeat_times, number=1)
         result = {
-            "engine": "MLIR",
+            "engine": "iree",
             "version": tf.__version__,
             "device": "cuda" if use_gpu else "cpu",
             "optimizer": "",
@@ -448,7 +452,7 @@ def run_iree(use_gpu, model_names, model_class, precision, num_threads,
             "io_binding": "",
             "model_name": "microsoft/MiniLM-L12-H384-uncased",
             "inputs": 1,
-            "threads": 1,
+            "threads": num_threads, # TODO: fix threads
             "batch_size": batch_sizes[0],
             "sequence_length": sequence_lengths[0],
             "datetime": str(datetime.now()),
@@ -785,7 +789,6 @@ def main():
                                 args.precision, num_threads, args.batch_sizes,
                                 args.sequence_lengths, args.test_times,
                                 args.cache_dir, args.verbose)
-
 
         model_fusion_statistics = {}
         if enable_onnxruntime:
