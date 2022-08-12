@@ -39,9 +39,9 @@ run_cpu_int8=false
 # Engines to test.
 run_ort=true
 run_shark=false
-run_torch=true
-run_torchscript=true
-run_tensorflow=true
+run_torch=false
+run_torchscript=false
+run_tensorflow=false
 run_iree=true
 
 # only need once
@@ -50,7 +50,7 @@ install_pkg=true
 run_with_nsys=true
 
 # Enable optimizer (use script instead of OnnxRuntime for graph optimization)
-use_optimizer=false
+use_optimizer=true
 
 # read arguments
 opts=$(getopt \
